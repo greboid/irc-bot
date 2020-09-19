@@ -22,7 +22,7 @@ an RPC port and a http port open, so firewall/expose as required.
  version: "3.5"
  service:
    goplum:
-     image: greboid/irc-bot
+     image: greboid/irc
      environment:
        SERVER: irc.example.tld
        NICKNAME: bot
