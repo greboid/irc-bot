@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/greboid/irc/v2/irc"
-	"github.com/greboid/irc/v2/logger"
-	"github.com/greboid/irc/v2/rpc"
+	"github.com/greboid/irc/v3/irc"
+	"github.com/greboid/irc/v3/logger"
+	"github.com/greboid/irc/v3/rpc"
 	"github.com/kouhin/envflag"
 	"go.uber.org/zap"
 )
