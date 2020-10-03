@@ -1,0 +1,57 @@
+syntax = "proto3";
+package rpc;
+option go_package = "rpc";
+
+message ChannelMessage {
+    string channel = 1;
+    string message = 2;
+    string source = 3;
+}
+
+message RawMessage {
+    string message = 1;
+}
+
+message Error {
+    string message = 1;
+}
+
+message Channel {
+    string name = 1;
+}
+
+message Empty {
+}
+
+service IRCPlugin {
+    rpc ping(Empty) returns (Empty) {};
+    rpc sendChannelMessage(ChannelMessage) returns (Error) {};
+    rpc sendRawMessage(RawMessage) returns (Error) {};
+    rpc getMessages(Channel) returns (stream ChannelMessage) {}
+}
+
+message Route {
+    string prefix = 1;
+}
+
+message HttpRequest {
+    repeated HttpHeader header = 1;
+    bytes body = 2;
+    string path = 3;
+    string method = 4;
+}
+
+message HttpResponse {
+    repeated HttpHeader header = 1;
+    bytes body = 2;
+    int32 status = 3;
+}
+
+message HttpHeader {
+    string key = 1;
+    string value = 2;
+}
+
+service HTTPPlugin {
+    rpc getRequest(stream HttpResponse) returns (stream HttpRequest) {};
+}
