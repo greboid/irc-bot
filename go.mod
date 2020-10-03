@@ -1,4 +1,4 @@
-module github.com/greboid/irc-bot/v3
+module github.com/greboid/irc-bot/v4
 
 go 1.15
 
