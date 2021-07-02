@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/greboid/irc/v4/irc"
+	"github.com/greboid/irc/v5/irc"
 )
 
 type pluginServer struct {

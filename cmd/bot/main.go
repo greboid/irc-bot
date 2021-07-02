@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/greboid/irc-bot/v4/rpc"
-	"github.com/greboid/irc/v4/irc"
-	"github.com/greboid/irc/v4/logger"
+	"github.com/greboid/irc/v5/irc"
 	"github.com/kouhin/envflag"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 //go:generate protoc -I ../../rpc plugin.proto --go_out=plugins=grpc:../../rpc
@@ -29,15 +30,19 @@ var (
 )
 
 func main() {
-	log := logger.CreateLogger(*Debug)
+	err, log := CreateLogger(*Debug)
+	if err != nil {
+		fmt.Printf("Unable to create logger: %s", err.Error())
+		return
+	}
 	defer func() {
-		err := log.Sync()
+		err = log.Sync()
 		if err != nil {
 			panic("Unable to sync logs")
 		}
 	}()
 	log.Info("Starting bot")
-	if err := envflag.Parse(); err != nil {
+	if err = envflag.Parse(); err != nil {
 		log.Fatal("Unable to load config.", zap.String("error", err.Error()))
 	}
 	Plugins, err := rpc.ParsePluginString(*PluginsString)
@@ -48,8 +53,12 @@ func main() {
 		log.Fatal("Server and channel are mandatory")
 	}
 	eventManager := irc.NewEventManager()
-	connection := irc.NewIRC(*Server, *Password, *Nickname, *Realname, *TLS, *SASLAuth, *SASLUser, *SASLPass, log,
+	err, connection := irc.NewIRC(*Server, *Password, *Nickname, *Realname, *TLS, *SASLAuth, *SASLUser, *SASLPass, log,
 		*FloodProfile, eventManager)
+	if err != nil {
+		log.Fatalf("Unable to launch new connection: %s", err.Error())
+		return
+	}
 	rpcServer := rpc.NewGrpcServer(connection, eventManager, *RPCPort, Plugins, *WebPort, log)
 	log.Info("Adding callbacks")
 	addBotCallbacks(connection)
@@ -59,4 +68,23 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Info("Exiting")
+}
+
+func CreateLogger(debug bool) (error, *zap.SugaredLogger) {
+	zapConfig := zap.NewDevelopmentConfig()
+	zapConfig.DisableCaller = !debug
+	zapConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	zapConfig.DisableStacktrace = !debug
+	zapConfig.OutputPaths = []string{"stdout"}
+	if debug {
+		zapConfig.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	} else {
+		zapConfig.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
+	}
+
+	log, err := zapConfig.Build()
+	if err != nil {
+		return err, nil
+	}
+	return nil, log.Sugar()
 }
