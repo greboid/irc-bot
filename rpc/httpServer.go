@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -90,19 +91,14 @@ func (h *httpServer) handleRequest(writer http.ResponseWriter, request *http.Req
 		if strings.HasPrefix(request.URL.Path, fmt.Sprintf("/%s", h.pathMap[k].prefix)) {
 			stream := *h.pathMap[k].stream
 			if stream != nil {
-				body, err := ioutil.ReadAll(request.Body)
+				rpcHttpc, err := ConvertHTTPToRPC(request)
 				if err != nil {
 					h.logger.Errorf("Unable to read input")
 					writer.WriteHeader(http.StatusInternalServerError)
 					_, _ = writer.Write([]byte("Unable to read input"))
 					return
 				}
-				err = stream.Send(&HttpRequest{
-					Header: ConvertToRPCHeaders(request.Header),
-					Body:   body,
-					Path:   request.URL.Path,
-					Method: request.Method,
-				})
+				err = stream.Send(rpcHttpc)
 				if err != nil {
 					h.logger.Errorf("Unable to send to plugin")
 					writer.WriteHeader(http.StatusInternalServerError)
@@ -154,6 +150,27 @@ func (h *httpServer) GetRequest(stream HTTPPlugin_GetRequestServer) error {
 			return err
 		}
 		h.pathMap[path].receive <- in
+	}
+}
+
+func ConvertHTTPToRPC(r *http.Request) (*HttpRequest, error) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return &HttpRequest{
+		Header:               ConvertToRPCHeaders(r.Header),
+		Body:                 body,
+		Path:                 r.URL.Path,
+		Method:               r.Method,
+	}, nil
+}
+
+func ConvertRPCToHTTP(r *HttpRequest) *http.Request {
+	return &http.Request{
+		Method:           r.Method,
+		Header:           ConvertFromRPCHeaders(r.Header),
+		Body:             io.NopCloser(bytes.NewReader(r.Body)),
 	}
 }
 
