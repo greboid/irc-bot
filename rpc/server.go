@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/greboid/irc/v5/irc"
+	"github.com/greboid/irc/v6/irc"
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"go.uber.org/zap"

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/greboid/irc-bot/v4/rpc"
-	"github.com/greboid/irc/v5/irc"
+	"github.com/greboid/irc/v6/irc"
 	"github.com/kouhin/envflag"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -38,7 +38,7 @@ func main() {
 	defer func() {
 		err = log.Sync()
 		if err != nil {
-			panic("Unable to sync logs")
+			fmt.Printf("Unable to sync logs")
 		}
 	}()
 	log.Info("Starting bot")
@@ -53,12 +53,8 @@ func main() {
 		log.Fatal("Server and channel are mandatory")
 	}
 	eventManager := irc.NewEventManager()
-	err, connection := irc.NewIRC(*Server, *Password, *Nickname, *Realname, *TLS, *SASLAuth, *SASLUser, *SASLPass, log,
+	connection := irc.NewIRC(*Server, *Password, *Nickname, *Realname, *TLS, *SASLAuth, *SASLUser, *SASLPass, log,
 		*FloodProfile, eventManager)
-	if err != nil {
-		log.Fatalf("Unable to launch new connection: %s", err.Error())
-		return
-	}
 	rpcServer := rpc.NewGrpcServer(connection, eventManager, *RPCPort, Plugins, *WebPort, log)
 	log.Info("Adding callbacks")
 	addBotCallbacks(connection)

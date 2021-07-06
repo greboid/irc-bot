@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/greboid/irc/v5/irc"
+	"github.com/greboid/irc/v6/irc"
 	"strings"
 )
 
