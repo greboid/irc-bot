@@ -5,36 +5,36 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/greboid/irc/v6/irc"
+	"github.com/greboid/irc-bot/v5/bot"
+	"github.com/greboid/irc/v7/irc"
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-func NewGrpcServer(conn *irc.Connection, eventManager *irc.EventManager, rpcPort int, plugins []Plugin, webPort int, logger *zap.SugaredLogger) GrpcServer {
-	return GrpcServer{
-		conn:         conn,
-		eventManager: eventManager,
+func NewGrpcServer(rpcPort int, pluginString string, webPort int, logger irc.Logger) (*GrpcServer, error) {
+	plugins, err := ParsePluginString(pluginString)
+	if err != nil {
+		return nil, err
+	}
+	return &GrpcServer{
 		rpcPort:      rpcPort,
 		plugins:      plugins,
 		webPort:      webPort,
 		logger:       logger,
-	}
+	}, nil
 }
 
 type GrpcServer struct {
-	conn         *irc.Connection
-	eventManager *irc.EventManager
 	rpcPort      int
 	plugins      []Plugin
 	webPort      int
-	logger       *zap.SugaredLogger
+	logger       irc.Logger
 }
 
-func (s *GrpcServer) StartGRPC() {
+func (s *GrpcServer) StartGRPC(bot *bot.Bot) {
 	certificate, err := generateSelfSignedCert()
 	if err != nil {
 		s.logger.Fatalf("failed to generate certificate: %s", err.Error())
@@ -51,7 +51,7 @@ func (s *GrpcServer) StartGRPC() {
 		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(s.authPlugin))),
 	)
 	httpsServer := NewHttpServer(s.webPort, s.plugins, s.logger)
-	RegisterIRCPluginServer(grpcServer, &pluginServer{s.conn, s.eventManager})
+	RegisterIRCPluginServer(grpcServer, &pluginServer{bot})
 	RegisterHTTPPluginServer(grpcServer, httpsServer)
 	s.logger.Infof("Starting HTTP Server: %d", s.webPort)
 	httpsServer.Start()

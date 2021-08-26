@@ -5,11 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
-	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,13 +12,22 @@ import (
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/greboid/irc/v7/irc"
+	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type httpServer struct {
 	WebPort int
 	plugins []Plugin
 	pathMap map[string]*descriptor
-	logger  *zap.SugaredLogger
+	logger  irc.Logger
+}
+
+func (h *httpServer) mustEmbedUnimplementedHTTPPluginServer() {
 }
 
 type descriptor struct {
@@ -32,7 +36,7 @@ type descriptor struct {
 	receive chan *HttpResponse
 }
 
-func NewHttpServer(port int, plugin []Plugin, logger *zap.SugaredLogger) *httpServer {
+func NewHttpServer(port int, plugin []Plugin, logger irc.Logger) *httpServer {
 	return &httpServer{
 		WebPort: port,
 		plugins: plugin,

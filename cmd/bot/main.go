@@ -3,14 +3,19 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/greboid/irc-bot/v4/rpc"
-	"github.com/greboid/irc/v6/irc"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/greboid/irc-bot/v5/bot"
+	"github.com/greboid/irc-bot/v5/rpc"
 	"github.com/kouhin/envflag"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-//go:generate protoc -I ../../rpc plugin.proto --go_out=plugins=grpc:../../rpc
+//go:generate protoc --go_out=../../rpc -I ../../rpc plugin.proto
+//go:generate protoc --go-grpc_out=../../rpc -I ../../rpc plugin.proto
 
 var (
 	Server        = flag.String("server", "", "Which IRC server to connect to")
@@ -30,6 +35,10 @@ var (
 )
 
 func main() {
+	if err := envflag.Parse(); err != nil {
+		fmt.Printf("Unable to load config: %s", err.Error())
+		return
+	}
 	err, log := CreateLogger(*Debug)
 	if err != nil {
 		fmt.Printf("Unable to create logger: %s", err.Error())
@@ -37,29 +46,23 @@ func main() {
 	}
 	defer func() {
 		err = log.Sync()
-		if err != nil {
-			fmt.Printf("Unable to sync logs")
-		}
 	}()
 	log.Info("Starting bot")
-	if err = envflag.Parse(); err != nil {
-		log.Fatal("Unable to load config.", zap.String("error", err.Error()))
+	if len(*Server) == 0 {
+		log.Fatal("Server is mandatory")
 	}
-	Plugins, err := rpc.ParsePluginString(*PluginsString)
+	rpcServer, err := rpc.NewGrpcServer(*RPCPort, *PluginsString, *WebPort, log)
 	if err != nil {
-		log.Fatal("Unable to load config.", zap.String("error", err.Error()))
+		log.Fatalf("Unable to create GRPC server: %s", err)
 	}
-	if len(*Server) == 0 && len(*Channel) == 0 {
-		log.Fatal("Server and channel are mandatory")
-	}
-	eventManager := irc.NewEventManager()
-	connection := irc.NewIRC(*Server, *Password, *Nickname, *Realname, *TLS, *SASLAuth, *SASLUser, *SASLPass, log,
-		*FloodProfile, eventManager)
-	rpcServer := rpc.NewGrpcServer(connection, eventManager, *RPCPort, Plugins, *WebPort, log)
-	log.Info("Adding callbacks")
-	addBotCallbacks(connection)
-	go rpcServer.StartGRPC()
-	err = connection.ConnectAndWaitWithRetry(5)
+	ircBot := bot.NewBot(*Server, *Password, *Nickname, *Realname, *TLS, *SASLAuth, *SASLUser, *SASLPass, log,
+		*FloodProfile, *Channel)
+	go func() {
+		rpcServer.StartGRPC(ircBot)
+	}()
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	err = ircBot.Start(signals)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,6 +84,10 @@ func CreateLogger(debug bool) (error, *zap.SugaredLogger) {
 	log, err := zapConfig.Build()
 	if err != nil {
 		return err, nil
+	}
+	_, err = zap.RedirectStdLogAt(log, zap.DebugLevel)
+	if err != nil {
+		log.Fatal("Unable to modify standard logger")
 	}
 	return nil, log.Sugar()
 }

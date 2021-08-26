@@ -1,11 +1,12 @@
 syntax = "proto3";
 package rpc;
-option go_package = "rpc";
+option go_package = "../rpc";
 
 message ChannelMessage {
     string channel = 1;
     string message = 2;
     string source = 3;
+    map<string, string> tags = 4;
 }
 
 message RawMessage {
@@ -20,6 +21,10 @@ message Channel {
     string name = 1;
 }
 
+message ChannelList {
+    repeated string name = 1;
+}
+
 message Empty {
 }
 
@@ -28,6 +33,9 @@ service IRCPlugin {
     rpc sendChannelMessage(ChannelMessage) returns (Error) {};
     rpc sendRawMessage(RawMessage) returns (Error) {};
     rpc getMessages(Channel) returns (stream ChannelMessage) {}
+    rpc joinChannel(Channel) returns (Error) {};
+    rpc leaveChannel(Channel) returns (Error) {};
+    rpc listChannel(Empty) returns (ChannelList) {};
 }
 
 message Route {

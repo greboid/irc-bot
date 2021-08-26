@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/greboid/irc-bot/v4/rpc"
+	"github.com/greboid/irc-bot/v5/rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
