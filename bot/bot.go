@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/ergochat/irc-go/ircevent"
 	"github.com/ergochat/irc-go/ircmsg"
 	"github.com/ergochat/irc-go/ircutils"
 	"github.com/greboid/irc/v7/irc"
@@ -26,6 +27,18 @@ func NewBot(server, password, nickname, realname string, useTLS, useSasl bool, s
 	}
 	bot.addBotCallbacks()
 	return bot
+}
+
+func (b *Bot) CurrentNick() string {
+	return b.Connection.CurrentNick()
+}
+
+func (b *Bot) RemoveCallback(id ircevent.CallbackID) {
+	b.Connection.RemoveCallback(id)
+}
+
+func (b *Bot) AddCallback(s string, f func(ircmsg.Message)) ircevent.CallbackID {
+	return b.AddCallback(s, f)
 }
 
 func (b *Bot) Start(signals chan os.Signal) error {

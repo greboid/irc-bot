@@ -51,7 +51,7 @@ func (s *GrpcServer) StartGRPC(bot *bot.Bot) {
 		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(s.authPlugin))),
 	)
 	httpsServer := NewHttpServer(s.webPort, s.plugins, s.logger)
-	RegisterIRCPluginServer(grpcServer, &pluginServer{bot})
+	RegisterIRCPluginServer(grpcServer, &pluginServer{bot.Connection, bot})
 	RegisterHTTPPluginServer(grpcServer, httpsServer)
 	s.logger.Infof("Starting HTTP Server: %d", s.webPort)
 	httpsServer.Start()

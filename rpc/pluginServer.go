@@ -4,16 +4,30 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ergochat/irc-go/ircevent"
 	"github.com/ergochat/irc-go/ircmsg"
-	"github.com/greboid/irc-bot/v5/bot"
 )
 
+type IRCFunctions interface {
+	GetChannels() []string
+	CurrentNick() string
+	RemoveCallback(id ircevent.CallbackID)
+	AddCallback(string, func(ircmsg.Message)) ircevent.CallbackID
+}
+
+type IRCSender interface {
+	Join(string) error
+	Part(string) error
+	SendRawf(string, ...interface{}) error
+}
+
 type pluginServer struct {
-	bot         *bot.Bot
+	sender IRCSender
+	functions IRCFunctions
 }
 
 func (ps *pluginServer) JoinChannel(_ context.Context, channel *Channel) (*Error, error) {
-	err := ps.bot.Connection.Part(channel.Name)
+	err := ps.sender.Join(channel.Name)
 	if err != nil {
 		return &Error{
 			Message:       channel.Name,
@@ -25,7 +39,7 @@ func (ps *pluginServer) JoinChannel(_ context.Context, channel *Channel) (*Error
 }
 
 func (ps *pluginServer) LeaveChannel(_ context.Context, channel *Channel) (*Error, error) {
-	err := ps.bot.Connection.Join(channel.Name)
+	err := ps.sender.Part(channel.Name)
 	if err != nil {
 		return &Error{
 			Message:       channel.Name,
@@ -38,7 +52,7 @@ func (ps *pluginServer) LeaveChannel(_ context.Context, channel *Channel) (*Erro
 
 func (ps *pluginServer) ListChannel(_ context.Context, _ *Empty) (*ChannelList, error) {
 	return &ChannelList{
-		Name: ps.bot.GetChannels(),
+		Name: ps.functions.GetChannels(),
 	}, nil
 }
 
@@ -46,7 +60,7 @@ func (ps *pluginServer) mustEmbedUnimplementedIRCPluginServer() {
 }
 
 func (ps *pluginServer) SendChannelMessage(_ context.Context, req *ChannelMessage) (*Error, error) {
-	err := ps.bot.Connection.Part(req.Channel)
+	err := ps.sender.SendRawf("PRIVMSG %s :%s", req.Channel, req.Message)
 	if err != nil {
 		return &Error{
 			Message: err.Error(),
@@ -56,7 +70,13 @@ func (ps *pluginServer) SendChannelMessage(_ context.Context, req *ChannelMessag
 		Message: "",
 	}, nil
 }
-func (*pluginServer) SendRawMessage(_ context.Context, _ *RawMessage) (*Error, error) {
+func (ps *pluginServer) SendRawMessage(_ context.Context, req *RawMessage) (*Error, error) {
+	err := ps.sender.SendRawf("%s", req.Message)
+	if err != nil {
+		return &Error{
+			Message: err.Error(),
+		}, err
+	}
 	return &Error{
 		Message: "",
 	}, nil
@@ -66,12 +86,17 @@ func (ps *pluginServer) GetMessages(channel *Channel, stream IRCPlugin_GetMessag
 	exitLoop := make(chan bool, 1)
 	chanMessage := make(chan *ircmsg.Message, 1)
 	channelName := channel.Name
-	defer ps.bot.Connection.RemoveCallback(ps.bot.Connection.AddCallback("PART", func(message ircmsg.Message) {
+	defer ps.functions.RemoveCallback(ps.functions.AddCallback("PART", func(message ircmsg.Message) {
 		if message.Params[1] == channelName {
 			exitLoop <- true
 		}
 	}))
-	defer ps.bot.Connection.RemoveCallback(ps.bot.Connection.AddCallback("PRIVMSG", func(message ircmsg.Message) {
+	defer ps.functions.RemoveCallback(ps.functions.AddCallback("KICK", func(message ircmsg.Message) {
+		if message.Params[1] == ps.functions.CurrentNick() && message.Params[1] == channelName {
+			exitLoop <- true
+		}
+	}))
+	defer ps.functions.RemoveCallback(ps.functions.AddCallback("PRIVMSG", func(message ircmsg.Message) {
 		if channelName == "*" || strings.ToLower(message.Params[0]) == strings.ToLower(channelName) {
 			chanMessage <- &message
 		}
