@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/ergochat/irc-go v0.0.0-20210809141720-dd73c4f86237
-	github.com/greboid/irc/v7 v7.0.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
 	go.uber.org/zap v1.16.0

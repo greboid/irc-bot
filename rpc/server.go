@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/greboid/irc-bot/v5/bot"
-	"github.com/greboid/irc/v7/irc"
+	"github.com/greboid/irc-bot/v5/irc"
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"

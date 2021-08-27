@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/greboid/irc/v7/irc"
+	"github.com/greboid/irc-bot/v5/irc"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/grpc/codes"

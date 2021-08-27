@@ -8,7 +8,7 @@ import (
 	"github.com/ergochat/irc-go/ircevent"
 	"github.com/ergochat/irc-go/ircmsg"
 	"github.com/ergochat/irc-go/ircutils"
-	"github.com/greboid/irc/v7/irc"
+	"github.com/greboid/irc-bot/v5/irc"
 )
 
 type Bot struct {
