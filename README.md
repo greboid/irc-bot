@@ -5,7 +5,7 @@ need to receive web requests.  Supports password and TLS auth for connecting to 
 an RPC port and a http port open, so firewall/expose as required.
 
  - go build github.com/greboid/irc-bot/v2/cmd/bot
- - docker run greboid/irc
+ - docker run ghcr.io/greboid/irc
     
  #### Configuration
  
@@ -22,7 +22,7 @@ an RPC port and a http port open, so firewall/expose as required.
  version: "3.5"
  service:
    goplum:
-     image: greboid/irc
+     image: ghcr.io/greboid/irc
      environment:
        SERVER: irc.example.tld
        NICKNAME: bot
