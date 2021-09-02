@@ -25,7 +25,7 @@ jobs:
         uses: redhat-actions/buildah-build@v2.6.2
         with:
           dockerfiles: Dockerfile
-          image: ${{ github.repository }}/auth
+          image: ${{ github.repository }}
           tags: ${{ steps.tags.outputs.tags }}
           extra-args: >
             --timestamp
