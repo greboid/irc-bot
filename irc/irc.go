@@ -125,7 +125,7 @@ func (irc *Connection) SendRawf(formatLine string, args ...interface{}) error {
 
 func (irc *Connection) SendRelayMessage(channel string, nickname string, message string) error {
 	if irc.AcknowledgedCaps()["draft/relaymsg"] == "" {
-		return irc.SendRawf("PRIVMSG %s :<%s> %s", channel, message)
+		return irc.SendRawf("PRIVMSG %s :<%s> %s", channel, nickname, message)
 	} else {
 		return irc.SendRawf("RELAYMSG %s %s :%s", channel, nickname, message)
 	}
