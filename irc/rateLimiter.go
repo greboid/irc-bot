@@ -28,7 +28,7 @@ func (r *RateLimiter) Init(profile string) {
 	case "unlimited":
 		r.limiter = rate.NewLimiter(rate.Inf, math.MaxInt)
 	case "restrictive":
-		r.limiter = rate.NewLimiter(rate.Every(1500 * time.Millisecond), 3)
+		r.limiter = rate.NewLimiter(rate.Every(2500 * time.Millisecond), 3)
 	}
 }
 
