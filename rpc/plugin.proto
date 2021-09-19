@@ -9,6 +9,13 @@ message ChannelMessage {
     map<string, string> tags = 4;
 }
 
+message RelayMessage {
+    string channel = 1;
+    string nick = 2;
+    string message = 3;
+    map<string, string> tags = 4;
+}
+
 message RawMessage {
     string message = 1;
 }
@@ -31,6 +38,7 @@ message Empty {
 service IRCPlugin {
     rpc ping(Empty) returns (Empty) {};
     rpc sendChannelMessage(ChannelMessage) returns (Error) {};
+    rpc sendRelayMessage(RelayMessage) returns (Error) {};
     rpc sendRawMessage(RawMessage) returns (Error) {};
     rpc getMessages(Channel) returns (stream ChannelMessage) {}
     rpc joinChannel(Channel) returns (Error) {};

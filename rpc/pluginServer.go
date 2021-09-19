@@ -19,11 +19,24 @@ type IRCSender interface {
 	Join(string) error
 	Part(string) error
 	SendRawf(string, ...interface{}) error
+	SendRelayMessage(channel string, nickname string, message string) error
 }
 
 type pluginServer struct {
 	sender    IRCSender
 	functions IRCFunctions
+}
+
+func (ps *pluginServer) SendRelayMessage(_ context.Context, message *RelayMessage) (*Error, error) {
+	err := ps.sender.SendRelayMessage(message.Channel, message.Nick, message.Message)
+	if err != nil {
+		return &Error{
+			Message: err.Error(),
+		}, err
+	}
+	return &Error{
+		Message: "",
+	}, nil
 }
 
 func (ps *pluginServer) JoinChannel(_ context.Context, channel *Channel) (*Error, error) {

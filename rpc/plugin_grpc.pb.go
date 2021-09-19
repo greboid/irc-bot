@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type IRCPluginClient interface {
 	Ping(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	SendChannelMessage(ctx context.Context, in *ChannelMessage, opts ...grpc.CallOption) (*Error, error)
+	SendRelayMessage(ctx context.Context, in *RelayMessage, opts ...grpc.CallOption) (*Error, error)
 	SendRawMessage(ctx context.Context, in *RawMessage, opts ...grpc.CallOption) (*Error, error)
 	GetMessages(ctx context.Context, in *Channel, opts ...grpc.CallOption) (IRCPlugin_GetMessagesClient, error)
 	JoinChannel(ctx context.Context, in *Channel, opts ...grpc.CallOption) (*Error, error)
@@ -47,6 +48,15 @@ func (c *iRCPluginClient) Ping(ctx context.Context, in *Empty, opts ...grpc.Call
 func (c *iRCPluginClient) SendChannelMessage(ctx context.Context, in *ChannelMessage, opts ...grpc.CallOption) (*Error, error) {
 	out := new(Error)
 	err := c.cc.Invoke(ctx, "/rpc.IRCPlugin/sendChannelMessage", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *iRCPluginClient) SendRelayMessage(ctx context.Context, in *RelayMessage, opts ...grpc.CallOption) (*Error, error) {
+	out := new(Error)
+	err := c.cc.Invoke(ctx, "/rpc.IRCPlugin/sendRelayMessage", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +137,7 @@ func (c *iRCPluginClient) ListChannel(ctx context.Context, in *Empty, opts ...gr
 type IRCPluginServer interface {
 	Ping(context.Context, *Empty) (*Empty, error)
 	SendChannelMessage(context.Context, *ChannelMessage) (*Error, error)
+	SendRelayMessage(context.Context, *RelayMessage) (*Error, error)
 	SendRawMessage(context.Context, *RawMessage) (*Error, error)
 	GetMessages(*Channel, IRCPlugin_GetMessagesServer) error
 	JoinChannel(context.Context, *Channel) (*Error, error)
@@ -144,6 +155,9 @@ func (UnimplementedIRCPluginServer) Ping(context.Context, *Empty) (*Empty, error
 }
 func (UnimplementedIRCPluginServer) SendChannelMessage(context.Context, *ChannelMessage) (*Error, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendChannelMessage not implemented")
+}
+func (UnimplementedIRCPluginServer) SendRelayMessage(context.Context, *RelayMessage) (*Error, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendRelayMessage not implemented")
 }
 func (UnimplementedIRCPluginServer) SendRawMessage(context.Context, *RawMessage) (*Error, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendRawMessage not implemented")
@@ -205,6 +219,24 @@ func _IRCPlugin_SendChannelMessage_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(IRCPluginServer).SendChannelMessage(ctx, req.(*ChannelMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _IRCPlugin_SendRelayMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RelayMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(IRCPluginServer).SendRelayMessage(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.IRCPlugin/sendRelayMessage",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(IRCPluginServer).SendRelayMessage(ctx, req.(*RelayMessage))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -316,6 +348,10 @@ var IRCPlugin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "sendChannelMessage",
 			Handler:    _IRCPlugin_SendChannelMessage_Handler,
+		},
+		{
+			MethodName: "sendRelayMessage",
+			Handler:    _IRCPlugin_SendRelayMessage_Handler,
 		},
 		{
 			MethodName: "sendRawMessage",

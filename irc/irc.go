@@ -65,6 +65,7 @@ func NewIRC(server, password, nickname, realname string, useTLS, useSasl bool, s
 		FloodProfile: floodProfile,
 		logger:       logger,
 	}
+	connection.connection.RequestCaps = append(connection.connection.RequestCaps, "draft/relaymsg")
 	connection.limiter = connection.NewRateLimiter(floodProfile)
 	logger.Infof("Creating new IRC")
 	return connection
@@ -120,6 +121,14 @@ func (irc *Connection) SendRaw(line string) error {
 
 func (irc *Connection) SendRawf(formatLine string, args ...interface{}) error {
 	return irc.SendRaw(fmt.Sprintf(formatLine, args...))
+}
+
+func (irc *Connection) SendRelayMessage(channel string, nickname string, message string) error {
+	if irc.AcknowledgedCaps()["draft/relaymsg"] == "" {
+		return irc.SendRawf("PRIVMSG %s :<%s> %s", channel, message)
+	} else {
+		return irc.SendRawf("RELAYMSG %s %s :%s", channel, nickname, message)
+	}
 }
 
 func (irc *Connection) Connect() error {
