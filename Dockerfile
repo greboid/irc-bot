@@ -1,4 +1,4 @@
-FROM registry.greboid.com/mirror/golang:latest as builder
+FROM reg.g5d.dev/golang@sha256:092432223820de2928ae7bd05e069c52b69349e29250695f56b793e17c32d0a2 as builder
 
 ENV USER=appuser
 ENV UID=10001
@@ -16,12 +16,7 @@ WORKDIR /app
 COPY . /app
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -trimpath -ldflags=-buildid= -o main ./cmd/bot
 
-FROM scratch
-
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+FROM reg.g5d.dev/base@sha256:4dc61e45d55285af7ae06b1f56943e825d55793a628d085ff56be2a00a3d5039
 
 COPY --from=builder /app/main /irc-bot
 EXPOSE 8080
