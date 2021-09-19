@@ -22,7 +22,7 @@ type IRCSender interface {
 }
 
 type pluginServer struct {
-	sender IRCSender
+	sender    IRCSender
 	functions IRCFunctions
 }
 
@@ -30,7 +30,7 @@ func (ps *pluginServer) JoinChannel(_ context.Context, channel *Channel) (*Error
 	err := ps.sender.Join(channel.Name)
 	if err != nil {
 		return &Error{
-			Message:       channel.Name,
+			Message: channel.Name,
 		}, err
 	}
 	return &Error{
@@ -42,7 +42,7 @@ func (ps *pluginServer) LeaveChannel(_ context.Context, channel *Channel) (*Erro
 	err := ps.sender.Part(channel.Name)
 	if err != nil {
 		return &Error{
-			Message:       channel.Name,
+			Message: channel.Name,
 		}, err
 	}
 	return &Error{
@@ -109,8 +109,8 @@ func (ps *pluginServer) GetMessages(channel *Channel, stream IRCPlugin_GetMessag
 			if err := stream.Send(&ChannelMessage{
 				Channel: strings.ToLower(msg.Params[0]),
 				Message: strings.Join(msg.Params[1:], " "),
-				Tags: msg.AllTags(),
-				Source: msg.Prefix,
+				Tags:    msg.AllTags(),
+				Source:  msg.Prefix,
 			}); err != nil {
 				return err
 			}

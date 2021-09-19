@@ -33,34 +33,34 @@ type Logger interface {
 type Connection struct {
 	connection   *ircevent.Connection
 	FloodProfile string
-	logger           Logger
-	connected bool
-	limiter *RateLimiter
+	logger       Logger
+	connected    bool
+	limiter      *RateLimiter
 }
 
 func NewIRC(server, password, nickname, realname string, useTLS, useSasl bool, saslUser, saslPass string,
 	logger Logger, floodProfile string) *Connection {
 	connection := &Connection{
 		connection: &ircevent.Connection{
-			Server:          server,
-			Nick:            nickname,
-			User:            nickname,
-			RealName:        realname,
-			Password:        password,
-			SASLLogin:       saslUser,
-			SASLPassword:    saslPass,
-			SASLMech:        "PLAIN",
-			Timeout:         1 * time.Minute,
-			KeepAlive:       4 * time.Minute,
-			UseTLS:          useTLS,
-			UseSASL:         useSasl,
-			EnableCTCP:      true,
-			Debug: true,
+			Server:       server,
+			Nick:         nickname,
+			User:         nickname,
+			RealName:     realname,
+			Password:     password,
+			SASLLogin:    saslUser,
+			SASLPassword: saslPass,
+			SASLMech:     "PLAIN",
+			Timeout:      1 * time.Minute,
+			KeepAlive:    4 * time.Minute,
+			UseTLS:       useTLS,
+			UseSASL:      useSasl,
+			EnableCTCP:   true,
+			Debug:        true,
 			TLSConfig: &tls.Config{
-				InsecureSkipVerify:          true,
+				InsecureSkipVerify: true,
 			},
 			QuitMessage: " ",
-			Log: log.Default(),
+			Log:         log.Default(),
 		},
 		FloodProfile: floodProfile,
 		logger:       logger,
@@ -96,6 +96,18 @@ func (irc *Connection) Part(channel string) error {
 
 func (irc *Connection) CurrentNick() string {
 	return irc.connection.CurrentNick()
+}
+
+func (irc *Connection) ISupport() map[string]string {
+	return irc.connection.ISupport()
+}
+
+func (irc *Connection) AcknowledgedCaps() map[string]string {
+	return irc.connection.AcknowledgedCaps()
+}
+
+func (irc *Connection) SetMode(mode string) error {
+	return irc.SendRawf("MODE %s %s", irc.CurrentNick(), mode)
 }
 
 func (irc *Connection) SendRaw(line string) error {

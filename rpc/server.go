@@ -20,18 +20,18 @@ func NewGrpcServer(rpcPort int, pluginString string, webPort int, logger irc.Log
 		return nil, err
 	}
 	return &GrpcServer{
-		rpcPort:      rpcPort,
-		plugins:      plugins,
-		webPort:      webPort,
-		logger:       logger,
+		rpcPort: rpcPort,
+		plugins: plugins,
+		webPort: webPort,
+		logger:  logger,
 	}, nil
 }
 
 type GrpcServer struct {
-	rpcPort      int
-	plugins      []Plugin
-	webPort      int
-	logger       irc.Logger
+	rpcPort int
+	plugins []Plugin
+	webPort int
+	logger  irc.Logger
 }
 
 func (s *GrpcServer) StartGRPC(bot *bot.Bot) {

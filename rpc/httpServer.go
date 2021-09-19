@@ -163,18 +163,18 @@ func ConvertHTTPToRPC(r *http.Request) (*HttpRequest, error) {
 		return nil, err
 	}
 	return &HttpRequest{
-		Header:               ConvertToRPCHeaders(r.Header),
-		Body:                 body,
-		Path:                 r.URL.Path,
-		Method:               r.Method,
+		Header: ConvertToRPCHeaders(r.Header),
+		Body:   body,
+		Path:   r.URL.Path,
+		Method: r.Method,
 	}, nil
 }
 
 func ConvertRPCToHTTP(r *HttpRequest) *http.Request {
 	return &http.Request{
-		Method:           r.Method,
-		Header:           ConvertFromRPCHeaders(r.Header),
-		Body:             io.NopCloser(bytes.NewReader(r.Body)),
+		Method: r.Method,
+		Header: ConvertFromRPCHeaders(r.Header),
+		Body:   io.NopCloser(bytes.NewReader(r.Body)),
 	}
 }
 

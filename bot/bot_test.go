@@ -33,8 +33,8 @@ func Test_getJoinCommands(t *testing.T) {
 			wantJoinCommands: []string{"#test,#test2 key,key2"},
 		},
 		{
-			name:             "mixed keyed/keyless channel",
-			args:             "#test key,#test2",
+			name: "mixed keyed/keyless channel",
+			args: "#test key,#test2",
 			wantJoinCommands: []string{
 				"#test key",
 				"#test2",

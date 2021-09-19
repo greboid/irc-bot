@@ -12,9 +12,10 @@ import (
 )
 
 type Bot struct {
-	Connection *irc.Connection
-	channels   []string
+	Connection     *irc.Connection
+	channels       []string
 	initialChannel string
+	log            irc.Logger
 }
 
 func NewBot(server, password, nickname, realname string, useTLS, useSasl bool, saslUser, saslPass string,
@@ -24,6 +25,7 @@ func NewBot(server, password, nickname, realname string, useTLS, useSasl bool, s
 		Connection:     connection,
 		channels:       []string{},
 		initialChannel: initialChannel,
+		log:            logger,
 	}
 	bot.addBotCallbacks()
 	return bot
@@ -55,7 +57,7 @@ func (b *Bot) GetChannels() []string {
 
 func (b *Bot) addBotCallbacks() {
 	b.Connection.AddConnectCallback(func(message ircmsg.Message) {
-		b.joinChannels(b.Connection, &message)
+		b.onConnect(b.Connection)
 	})
 	b.Connection.AddCallback("JOIN", func(message ircmsg.Message) {
 		if ircutils.ParseUserhost(message.Prefix).Nick == b.Connection.CurrentNick() {
@@ -74,7 +76,18 @@ func (b *Bot) addBotCallbacks() {
 	})
 }
 
-func (b *Bot) joinChannels(c *irc.Connection, _ *ircmsg.Message) {
+func (b *Bot) onConnect(c *irc.Connection) {
+	botMode := c.ISupport()["BOT"]
+	if len(botMode) > 0 {
+		err := c.SetMode("+" + botMode)
+		if err != nil {
+			b.log.Errorf("Unable to set mode: %s", err)
+		}
+	}
+	b.joinChannels(c)
+}
+
+func (b *Bot) joinChannels(c *irc.Connection) {
 	if len(b.initialChannel) == 0 {
 		return
 	}
