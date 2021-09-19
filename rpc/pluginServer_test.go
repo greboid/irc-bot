@@ -11,6 +11,10 @@ type fakeIRCSender struct {
 	sendMessages []string
 }
 
+func (s *fakeIRCSender) SendRelayMessage(channel string, nickname string, message string) error {
+	panic("implement me")
+}
+
 func (s *fakeIRCSender) Join(s2 string) error {
 	panic("implement me")
 }
