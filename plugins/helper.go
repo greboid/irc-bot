@@ -123,6 +123,29 @@ func (h *PluginHelper) PingWithContext(ctx context.Context) error {
 	return err
 }
 
+func (h *PluginHelper) SendRelayMessage(channel string, nickname string, messages ...string) error {
+	return h.SendChannelMessageWithContext(context.Background(), channel, messages...)
+}
+
+func (h *PluginHelper) SendRelayMessageWithContext(ctx context.Context, channel string, nickname string, messages ...string) error {
+	ircClient, err := h.IRCClientWithContext(ctx)
+	if err != nil {
+		return err
+	}
+	for index := range messages {
+		_, err := ircClient.SendRelayMessage(rpc.CtxWithToken(ctx, "bearer", h.RPCToken), &rpc.RelayMessage{
+			Channel: channel,
+			Nick:    nickname,
+			Message: messages[index],
+			Tags:    nil,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (h *PluginHelper) SendChannelMessage(channel string, messages ...string) error {
 	return h.SendChannelMessageWithContext(context.Background(), channel, messages...)
 }
