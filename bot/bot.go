@@ -40,7 +40,7 @@ func (b *Bot) RemoveCallback(id ircevent.CallbackID) {
 }
 
 func (b *Bot) AddCallback(s string, f func(ircmsg.Message)) ircevent.CallbackID {
-	return b.AddCallback(s, f)
+	return b.Connection.AddCallback(s, f)
 }
 
 func (b *Bot) Start(signals chan os.Signal) error {
