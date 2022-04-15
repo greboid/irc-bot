@@ -123,7 +123,7 @@ func (ps *pluginServer) GetMessages(channel *Channel, stream IRCPlugin_GetMessag
 				Channel: strings.ToLower(msg.Params[0]),
 				Message: strings.Join(msg.Params[1:], " "),
 				Tags:    msg.AllTags(),
-				Source:  msg.Prefix,
+				Source:  msg.Source,
 			}); err != nil {
 				return err
 			}

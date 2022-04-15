@@ -7,7 +7,6 @@ import (
 
 	"github.com/ergochat/irc-go/ircevent"
 	"github.com/ergochat/irc-go/ircmsg"
-	"github.com/ergochat/irc-go/ircutils"
 	"github.com/greboid/irc-bot/v5/irc"
 )
 
@@ -60,8 +59,11 @@ func (b *Bot) addBotCallbacks() {
 		b.onConnect(b.Connection)
 	})
 	b.Connection.AddCallback("JOIN", func(message ircmsg.Message) {
-		if ircutils.ParseUserhost(message.Prefix).Nick == b.Connection.CurrentNick() {
-			b.addToChannels(message.Params[0])
+		nuh, err := message.NUH()
+		if err == nil {
+			if nuh.Name == b.Connection.CurrentNick() {
+				b.addToChannels(message.Params[0])
+			}
 		}
 	})
 	b.Connection.AddCallback("KICK", func(message ircmsg.Message) {
@@ -70,8 +72,11 @@ func (b *Bot) addBotCallbacks() {
 		}
 	})
 	b.Connection.AddCallback("PART", func(message ircmsg.Message) {
-		if ircutils.ParseUserhost(message.Prefix).Nick == b.Connection.CurrentNick() {
-			b.removeFromChannels(message.Params[0])
+		nuh, err := message.NUH()
+		if err == nil {
+			if nuh.Name == b.Connection.CurrentNick() {
+				b.removeFromChannels(message.Params[0])
+			}
 		}
 	})
 }
