@@ -9,7 +9,7 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	google.golang.org/grpc v1.48.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
