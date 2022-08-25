@@ -6,7 +6,7 @@ require (
 	github.com/ergochat/irc-go v0.2.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
-	go.uber.org/zap v1.22.0
+	go.uber.org/zap v1.23.0
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
