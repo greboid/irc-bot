@@ -13,6 +13,7 @@ require (
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.2.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
