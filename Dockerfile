@@ -1,4 +1,4 @@
-FROM ghcr.io/greboid/dockerfiles/golang as builder
+FROM golang:latest as builder
 WORKDIR /app
 COPY . /app
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -trimpath -ldflags=-buildid= -o main ./cmd/bot
