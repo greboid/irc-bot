@@ -15,7 +15,7 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.5.2 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/net v0.32.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
