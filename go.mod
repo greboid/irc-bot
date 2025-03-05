@@ -1,6 +1,9 @@
 module github.com/greboid/irc-bot/v5
 
-go 1.23
+go 1.23.0
+
+toolchain go1.24.0
+
 require (
 	github.com/ergochat/irc-go v0.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
