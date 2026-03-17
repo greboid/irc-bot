@@ -3,7 +3,7 @@ module github.com/greboid/irc-bot/v5
 go 1.25.0
 
 require (
-	github.com/ergochat/irc-go v0.5.0
+	github.com/ergochat/irc-go v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
 	go.uber.org/zap v1.27.1
