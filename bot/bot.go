@@ -2,29 +2,27 @@ package bot
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
 	"github.com/ergochat/irc-go/ircevent"
 	"github.com/ergochat/irc-go/ircmsg"
-	"github.com/greboid/irc-bot/v5/irc"
+	"github.com/greboid/irc-bot/v6/irc"
 )
 
 type Bot struct {
 	Connection     *irc.Connection
 	channels       []string
 	initialChannel string
-	log            irc.Logger
 }
 
-func NewBot(server, password, nickname, realname string, useTLS, useSasl bool, saslUser, saslPass string,
-	logger irc.Logger, floodProfile string, initialChannel string) *Bot {
-	connection := irc.NewIRC(server, password, nickname, realname, useTLS, useSasl, saslUser, saslPass, logger, floodProfile)
+func NewBot(server, password, nickname, realname string, useTLS, useSasl bool, saslUser, saslPass string, floodProfile string, initialChannel string) *Bot {
+	connection := irc.NewIRC(server, password, nickname, realname, useTLS, useSasl, saslUser, saslPass, floodProfile)
 	bot := &Bot{
 		Connection:     connection,
 		channels:       []string{},
 		initialChannel: initialChannel,
-		log:            logger,
 	}
 	bot.addBotCallbacks()
 	return bot
@@ -86,7 +84,7 @@ func (b *Bot) onConnect(c *irc.Connection) {
 	if len(botMode) > 0 {
 		err := c.SetMode("+" + botMode)
 		if err != nil {
-			b.log.Errorf("Unable to set mode: %s", err)
+			slog.Error("Unable to set mode", "error", err)
 		}
 	}
 	b.joinChannels(c)

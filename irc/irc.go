@@ -4,7 +4,8 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"log"
+	"github.com/csmith/slogflags"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,32 +15,14 @@ import (
 	"github.com/ergochat/irc-go/ircmsg"
 )
 
-//Logger interface for loosely typed printf-style formatted error logging messages
-type Logger interface {
-	// Debugf uses fmt.Sprintf to log a templated message with an debug priority
-	Debugf(template string, args ...interface{})
-	// Infof uses fmt.Sprintf to log a templated message with an info priority
-	Infof(template string, args ...interface{})
-	// Warnf uses fmt.Sprintf to log a templated message with an warning priority
-	Warnf(template string, args ...interface{})
-	// Errorf uses fmt.Sprintf to log a templated message with an error priority
-	Errorf(template string, args ...interface{})
-	// Panicf uses fmt.Sprintf to log a templated message with an error priority
-	Panicf(template string, args ...interface{})
-	// Fatalf uses fmt.Sprintf to log a templated message with a fatal priority and then exit the application
-	Fatalf(template string, args ...interface{})
-}
-
 type Connection struct {
 	connection   *ircevent.Connection
 	FloodProfile string
-	logger       Logger
 	connected    bool
 	limiter      *RateLimiter
 }
 
-func NewIRC(server, password, nickname, realname string, useTLS, useSasl bool, saslUser, saslPass string,
-	logger Logger, floodProfile string) *Connection {
+func NewIRC(server, password, nickname, realname string, useTLS, useSasl bool, saslUser, saslPass string, floodProfile string) *Connection {
 	connection := &Connection{
 		connection: &ircevent.Connection{
 			Server:       server,
@@ -60,14 +43,13 @@ func NewIRC(server, password, nickname, realname string, useTLS, useSasl bool, s
 				InsecureSkipVerify: true,
 			},
 			QuitMessage: " ",
-			Log:         log.Default(),
+			Log:         slog.NewLogLogger(slogflags.Logger().Handler().WithGroup("rawirc"), slog.LevelDebug),
 		},
 		FloodProfile: floodProfile,
-		logger:       logger,
 	}
 	connection.connection.RequestCaps = append(connection.connection.RequestCaps, "draft/relaymsg")
 	connection.limiter = connection.NewRateLimiter(floodProfile)
-	logger.Infof("Creating new IRC")
+	slog.Info("Creating new IRC")
 	return connection
 }
 
@@ -132,7 +114,7 @@ func (irc *Connection) SendRelayMessage(channel string, nickname string, message
 }
 
 func (irc *Connection) Connect() error {
-	irc.logger.Infof("Connecting to IRC: %s", irc.connection.Server)
+	slog.Info("Connecting to IRC: %s", irc.connection.Server)
 	err := irc.connection.Connect()
 	if err != nil {
 		return err
@@ -141,9 +123,9 @@ func (irc *Connection) Connect() error {
 }
 
 func (irc *Connection) Wait() {
-	irc.logger.Debugf("Waiting for IRC to finish")
+	slog.Debug("Waiting for IRC to finish")
 	irc.connection.Loop()
-	irc.logger.Debugf("IRC Finished")
+	slog.Debug("IRC Finished")
 }
 
 func (irc *Connection) ConnectAndWait() error {
@@ -173,8 +155,8 @@ func (irc *Connection) ConnectAndWaitWithRetry(maxRetries int) error {
 		}
 		irc.connection.ReconnectFreq = time.Duration(retryDelay) * time.Second
 		if err != nil {
-			irc.logger.Errorf("Error connecting: %s", err.Error())
-			irc.logger.Infof("Retrying connect in %d", retryDelay)
+			slog.Error("Error connecting: %s", err.Error())
+			slog.Error("Retrying connect in %d", retryDelay)
 		} else {
 			return nil
 		}

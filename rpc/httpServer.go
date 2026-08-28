@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
 
-	"github.com/greboid/irc-bot/v5/irc"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/grpc/codes"
@@ -24,7 +24,6 @@ type httpServer struct {
 	WebPort int
 	plugins []Plugin
 	pathMap map[string]*descriptor
-	logger  irc.Logger
 }
 
 func (h *httpServer) mustEmbedUnimplementedHTTPPluginServer() {
@@ -36,12 +35,11 @@ type descriptor struct {
 	receive chan *HttpResponse
 }
 
-func NewHttpServer(port int, plugin []Plugin, logger irc.Logger) *httpServer {
+func NewHttpServer(port int, plugin []Plugin) *httpServer {
 	return &httpServer{
 		WebPort: port,
 		plugins: plugin,
 		pathMap: make(map[string]*descriptor),
-		logger:  logger,
 	}
 
 }
@@ -56,7 +54,7 @@ func (h *httpServer) Start() {
 		}
 		go func() {
 			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				h.logger.Errorf("Error starting HTTP: %s", err.Error())
+				slog.Error("Error starting HTTP: %s", err.Error())
 			}
 		}()
 		stop := make(chan os.Signal, 1)
@@ -65,7 +63,7 @@ func (h *httpServer) Start() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {
-			h.logger.Errorf("Unable to shutdown: %s", err.Error())
+			slog.Error("Unable to shutdown: %s", err.Error())
 		}
 	}()
 }
@@ -97,14 +95,14 @@ func (h *httpServer) handleRequest(writer http.ResponseWriter, request *http.Req
 			if stream != nil {
 				rpcHttpc, err := ConvertHTTPToRPC(request)
 				if err != nil {
-					h.logger.Errorf("Unable to read input")
+					slog.Error("Unable to read input")
 					writer.WriteHeader(http.StatusInternalServerError)
 					_, _ = writer.Write([]byte("Unable to read input"))
 					return
 				}
 				err = stream.Send(rpcHttpc)
 				if err != nil {
-					h.logger.Errorf("Unable to send to plugin")
+					slog.Error("Unable to send to plugin")
 					writer.WriteHeader(http.StatusInternalServerError)
 					_, _ = writer.Write([]byte("Unable to send to handler"))
 					return
@@ -118,7 +116,7 @@ func (h *httpServer) handleRequest(writer http.ResponseWriter, request *http.Req
 					_, _ = writer.Write(response.Body)
 					return
 				case <-time.After(5 * time.Second):
-					h.logger.Errorf("Timeout waiting for plugin: %s", request.URL.Path)
+					slog.Error("Timeout waiting for plugin: %s", request.URL.Path)
 					writer.WriteHeader(http.StatusGatewayTimeout)
 					_, _ = writer.Write([]byte("Timeout waiting for handler"))
 					return
@@ -135,7 +133,7 @@ func (h *httpServer) GetRequest(stream HTTPPlugin_GetRequestServer) error {
 	if _, ok := h.pathMap[path]; ok {
 		return errors.New("prefix already registered")
 	}
-	h.logger.Debugf("Plugin listening for /%s/*", path)
+	slog.Debug("Plugin listening for /%s/*", path)
 	h.pathMap[path] = &descriptor{
 		prefix:  path,
 		receive: make(chan *HttpResponse, 1),
@@ -144,12 +142,12 @@ func (h *httpServer) GetRequest(stream HTTPPlugin_GetRequestServer) error {
 	for {
 		in, err := stream.Recv()
 		if err == io.EOF {
-			h.logger.Debugf("Plugin stopped listening for /%s/*", path)
+			slog.Debug("Plugin stopped listening for /%s/*", path)
 			delete(h.pathMap, path)
 			return nil
 		}
 		if err != nil {
-			h.logger.Debugf("Plugin stopped listening for /%s/*", path)
+			slog.Debug("Plugin stopped listening for /%s/*", path)
 			delete(h.pathMap, path)
 			return err
 		}

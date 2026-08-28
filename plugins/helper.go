@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/greboid/irc-bot/v5/rpc"
+	"github.com/greboid/irc-bot/v6/rpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -19,9 +19,9 @@ type PluginHelper struct {
 	ircClient     rpc.IRCPluginClient
 }
 
-//NewHelper returns a PluginHelper that simplifies writing plugins by managing grpc connections and exposing a simple
-//interface.
-//It returns a PluginHelper or any errors encountered whilst creating
+// NewHelper returns a PluginHelper that simplifies writing plugins by managing grpc connections and exposing a simple
+// interface.
+// It returns a PluginHelper or any errors encountered whilst creating
 func NewHelper(target string, rpctoken string) (*PluginHelper, error) {
 	if len(target) == 0 {
 		return nil, fmt.Errorf("gRPC target name needs to be set")
