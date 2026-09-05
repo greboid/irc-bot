@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/csmith/envflag/v2 v2.0.0
-	github.com/csmith/slogflags v1.0.0
+	github.com/csmith/slogflags v1.2.0
 	github.com/ergochat/irc-go v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	golang.org/x/time v0.15.0
