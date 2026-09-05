@@ -36,14 +36,14 @@ type GrpcServer struct {
 func (s *GrpcServer) StartGRPC(bot *bot.Bot) {
 	certificate, err := generateSelfSignedCert()
 	if err != nil {
-		slog.Error("failed to generate certificate: %s", err.Error())
+		slog.Error("failed to generate certificate", "error", err)
 		os.Exit(1)
 		return
 	}
-	slog.Info("Starting RPC server: %d", s.rpcPort)
+	slog.Info("Starting RPC server", "port", s.rpcPort)
 	lis, err := tls.Listen("tcp", fmt.Sprintf(":%d", s.rpcPort), &tls.Config{Certificates: []tls.Certificate{*certificate}})
 	if err != nil {
-		slog.Error("failed to listen: %v", err)
+		slog.Error("failed to listen", "error", err)
 		os.Exit(1)
 		return
 	}
@@ -54,11 +54,11 @@ func (s *GrpcServer) StartGRPC(bot *bot.Bot) {
 	httpsServer := NewHttpServer(s.webPort, s.plugins)
 	RegisterIRCPluginServer(grpcServer, &pluginServer{bot.Connection, bot})
 	RegisterHTTPPluginServer(grpcServer, httpsServer)
-	slog.Info("Starting HTTP Server: %d", s.webPort)
+	slog.Info("Starting HTTP Server", "port", s.webPort)
 	httpsServer.Start()
 	err = grpcServer.Serve(lis)
 	if err != nil {
-		slog.Error("Error listening: %s", err.Error())
+		slog.Error("Error listening", "error", err)
 		return
 	}
 }

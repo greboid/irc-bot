@@ -114,7 +114,7 @@ func (irc *Connection) SendRelayMessage(channel string, nickname string, message
 }
 
 func (irc *Connection) Connect() error {
-	slog.Info("Connecting to IRC: %s", irc.connection.Server)
+	slog.Info("Connecting to IRC", "server", irc.connection.Server)
 	err := irc.connection.Connect()
 	if err != nil {
 		return err
@@ -155,8 +155,8 @@ func (irc *Connection) ConnectAndWaitWithRetry(maxRetries int) error {
 		}
 		irc.connection.ReconnectFreq = time.Duration(retryDelay) * time.Second
 		if err != nil {
-			slog.Error("Error connecting: %s", err.Error())
-			slog.Error("Retrying connect in %d", retryDelay)
+			slog.Error("Error connecting", "error", err)
+			slog.Error("Retrying connect", "retryDelay", retryDelay)
 		} else {
 			return nil
 		}

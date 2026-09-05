@@ -54,7 +54,7 @@ func (h *httpServer) Start() {
 		}
 		go func() {
 			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				slog.Error("Error starting HTTP: %s", err.Error())
+				slog.Error("Error starting HTTP", "error", err)
 			}
 		}()
 		stop := make(chan os.Signal, 1)
@@ -63,7 +63,7 @@ func (h *httpServer) Start() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		if err := server.Shutdown(ctx); err != nil {
-			slog.Error("Unable to shutdown: %s", err.Error())
+			slog.Error("Unable to shutdown", "error", err)
 		}
 	}()
 }
@@ -116,7 +116,7 @@ func (h *httpServer) handleRequest(writer http.ResponseWriter, request *http.Req
 					_, _ = writer.Write(response.Body)
 					return
 				case <-time.After(5 * time.Second):
-					slog.Error("Timeout waiting for plugin: %s", request.URL.Path)
+					slog.Error("Timeout waiting for plugin", "path", request.URL.Path)
 					writer.WriteHeader(http.StatusGatewayTimeout)
 					_, _ = writer.Write([]byte("Timeout waiting for handler"))
 					return
@@ -133,7 +133,7 @@ func (h *httpServer) GetRequest(stream HTTPPlugin_GetRequestServer) error {
 	if _, ok := h.pathMap[path]; ok {
 		return errors.New("prefix already registered")
 	}
-	slog.Debug("Plugin listening for /%s/*", path)
+	slog.Debug("Plugin listening", "prefix", path)
 	h.pathMap[path] = &descriptor{
 		prefix:  path,
 		receive: make(chan *HttpResponse, 1),
@@ -142,12 +142,12 @@ func (h *httpServer) GetRequest(stream HTTPPlugin_GetRequestServer) error {
 	for {
 		in, err := stream.Recv()
 		if err == io.EOF {
-			slog.Debug("Plugin stopped listening for /%s/*", path)
+			slog.Debug("Plugin stopped listening", "prefix", path)
 			delete(h.pathMap, path)
 			return nil
 		}
 		if err != nil {
-			slog.Debug("Plugin stopped listening for /%s/*", path)
+			slog.Debug("Plugin stopped listening", "prefix", path)
 			delete(h.pathMap, path)
 			return err
 		}
