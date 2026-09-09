@@ -1,13 +1,13 @@
 module github.com/greboid/irc-bot/v6
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/csmith/envflag/v2 v2.0.0
 	github.com/csmith/slogflags v1.2.0
 	github.com/ergochat/irc-go v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	golang.org/x/time v0.15.0
+	golang.org/x/time v0.16.0
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
 )
