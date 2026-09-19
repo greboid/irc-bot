@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 
 	"github.com/greboid/irc-bot/v6/bot"
@@ -12,6 +13,7 @@ import (
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
@@ -41,16 +43,13 @@ func (s *GrpcServer) StartGRPC(bot *bot.Bot) {
 		return
 	}
 	slog.Info("Starting RPC server", "port", s.rpcPort)
-	lis, err := tls.Listen("tcp", fmt.Sprintf(":%d", s.rpcPort), &tls.Config{Certificates: []tls.Certificate{*certificate}})
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.rpcPort))
 	if err != nil {
 		slog.Error("failed to listen", "error", err)
 		os.Exit(1)
 		return
 	}
-	grpcServer := grpc.NewServer(
-		grpc.StreamInterceptor(grpcmiddleware.ChainStreamServer(grpcauth.StreamServerInterceptor(s.authPlugin))),
-		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(s.authPlugin))),
-	)
+	grpcServer := s.newGRPCServer(*certificate)
 	httpsServer := NewHttpServer(s.webPort, s.plugins)
 	RegisterIRCPluginServer(grpcServer, &pluginServer{bot.Connection, bot})
 	RegisterHTTPPluginServer(grpcServer, httpsServer)
@@ -61,6 +60,15 @@ func (s *GrpcServer) StartGRPC(bot *bot.Bot) {
 		slog.Error("Error listening", "error", err)
 		return
 	}
+}
+
+func (s *GrpcServer) newGRPCServer(certificate tls.Certificate) *grpc.Server {
+	return grpc.NewServer(
+		// Let gRPC configure TLS, including the h2 ALPN protocol required by clients.
+		grpc.Creds(credentials.NewTLS(&tls.Config{Certificates: []tls.Certificate{certificate}})),
+		grpc.StreamInterceptor(grpcmiddleware.ChainStreamServer(grpcauth.StreamServerInterceptor(s.authPlugin))),
+		grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(grpcauth.UnaryServerInterceptor(s.authPlugin))),
+	)
 }
 
 func (s *GrpcServer) authPlugin(ctx context.Context) (context.Context, error) {
