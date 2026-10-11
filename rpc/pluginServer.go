@@ -18,7 +18,7 @@ type IRCFunctions interface {
 type IRCSender interface {
 	Join(string) error
 	Part(string) error
-	SendRawf(string, ...interface{}) error
+	SendRawf(string, ...any) error
 	SendRelayMessage(channel string, nickname string, message string) error
 }
 

@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"time"
 
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
@@ -23,6 +24,7 @@ import (
 type httpServer struct {
 	WebPort int
 	plugins []Plugin
+	pathMu  sync.RWMutex
 	pathMap map[string]*descriptor
 }
 
@@ -89,38 +91,45 @@ func (h *httpServer) checkPlugin(token string) bool {
 }
 
 func (h *httpServer) handleRequest(writer http.ResponseWriter, request *http.Request) {
-	for k := range h.pathMap {
-		if strings.HasPrefix(request.URL.Path, fmt.Sprintf("/%s", h.pathMap[k].prefix)) {
-			stream := *h.pathMap[k].stream
-			if stream != nil {
-				rpcHttpc, err := ConvertHTTPToRPC(request)
-				if err != nil {
-					slog.Error("Unable to read input")
-					writer.WriteHeader(http.StatusInternalServerError)
-					_, _ = writer.Write([]byte("Unable to read input"))
-					return
+	h.pathMu.RLock()
+	var desc *descriptor
+	for _, d := range h.pathMap {
+		if strings.HasPrefix(request.URL.Path, fmt.Sprintf("/%s", d.prefix)) {
+			desc = d
+			break
+		}
+	}
+	h.pathMu.RUnlock()
+	if desc != nil {
+		stream := *desc.stream
+		if stream != nil {
+			rpcHttpc, err := ConvertHTTPToRPC(request)
+			if err != nil {
+				slog.Error("Unable to read input")
+				writer.WriteHeader(http.StatusInternalServerError)
+				_, _ = writer.Write([]byte("Unable to read input"))
+				return
+			}
+			err = stream.Send(rpcHttpc)
+			if err != nil {
+				slog.Error("Unable to send to plugin")
+				writer.WriteHeader(http.StatusInternalServerError)
+				_, _ = writer.Write([]byte("Unable to send to handler"))
+				return
+			}
+			select {
+			case response := <-desc.receive:
+				for index := range response.Header {
+					writer.Header().Add(response.Header[index].Key, response.Header[index].Value)
 				}
-				err = stream.Send(rpcHttpc)
-				if err != nil {
-					slog.Error("Unable to send to plugin")
-					writer.WriteHeader(http.StatusInternalServerError)
-					_, _ = writer.Write([]byte("Unable to send to handler"))
-					return
-				}
-				select {
-				case response := <-h.pathMap[k].receive:
-					for index := range response.Header {
-						writer.Header().Add(response.Header[index].Key, response.Header[index].Value)
-					}
-					writer.WriteHeader(int(response.Status))
-					_, _ = writer.Write(response.Body)
-					return
-				case <-time.After(5 * time.Second):
-					slog.Error("Timeout waiting for plugin", "path", request.URL.Path)
-					writer.WriteHeader(http.StatusGatewayTimeout)
-					_, _ = writer.Write([]byte("Timeout waiting for handler"))
-					return
-				}
+				writer.WriteHeader(int(response.Status))
+				_, _ = writer.Write(response.Body)
+				return
+			case <-time.After(5 * time.Second):
+				slog.Error("Timeout waiting for plugin", "path", request.URL.Path)
+				writer.WriteHeader(http.StatusGatewayTimeout)
+				_, _ = writer.Write([]byte("Timeout waiting for handler"))
+				return
 			}
 		}
 	}
@@ -130,28 +139,36 @@ func (h *httpServer) handleRequest(writer http.ResponseWriter, request *http.Req
 
 func (h *httpServer) GetRequest(stream HTTPPlugin_GetRequestServer) error {
 	path := metautils.ExtractIncoming(stream.Context()).Get("path")
+	h.pathMu.Lock()
 	if _, ok := h.pathMap[path]; ok {
+		h.pathMu.Unlock()
 		return errors.New("prefix already registered")
 	}
 	slog.Debug("Plugin listening", "prefix", path)
-	h.pathMap[path] = &descriptor{
+	descriptor := &descriptor{
 		prefix:  path,
 		receive: make(chan *HttpResponse, 1),
 		stream:  &stream,
 	}
+	h.pathMap[path] = descriptor
+	h.pathMu.Unlock()
 	for {
 		in, err := stream.Recv()
 		if err == io.EOF {
 			slog.Debug("Plugin stopped listening", "prefix", path)
+			h.pathMu.Lock()
 			delete(h.pathMap, path)
+			h.pathMu.Unlock()
 			return nil
 		}
 		if err != nil {
 			slog.Debug("Plugin stopped listening", "prefix", path)
+			h.pathMu.Lock()
 			delete(h.pathMap, path)
+			h.pathMu.Unlock()
 			return err
 		}
-		h.pathMap[path].receive <- in
+		descriptor.receive <- in
 	}
 }
 

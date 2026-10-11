@@ -23,7 +23,7 @@ func (s *fakeIRCSender) Part(s2 string) error {
 	panic("implement me")
 }
 
-func (s *fakeIRCSender) SendRawf(string string, i ...interface{}) error {
+func (s *fakeIRCSender) SendRawf(string string, i ...any) error {
 	fmt.Printf("----\n")
 	fmt.Printf(string, i...)
 	fmt.Printf("\n")

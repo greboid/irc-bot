@@ -23,7 +23,7 @@ func CtxWithTokenAndPath(ctx context.Context, scheme string, token string, path 
 }
 
 func ParsePluginString(pluginString string) (plugins []Plugin, err error) {
-	for _, value := range strings.Split(pluginString, ",") {
+	for value := range strings.SplitSeq(pluginString, ",") {
 		if len(value) == 0 {
 			break
 		}

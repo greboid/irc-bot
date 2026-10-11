@@ -101,7 +101,7 @@ func (irc *Connection) SendRaw(line string) error {
 	return irc.connection.SendRaw(line)
 }
 
-func (irc *Connection) SendRawf(formatLine string, args ...interface{}) error {
+func (irc *Connection) SendRawf(formatLine string, args ...any) error {
 	return irc.SendRaw(fmt.Sprintf(formatLine, args...))
 }
 
@@ -149,10 +149,7 @@ func (irc *Connection) ConnectAndWaitWithRetry(maxRetries int) error {
 		if retryCount > maxRetries {
 			return errors.New("maximum retries reached")
 		}
-		retryDelay = retryCount*5 + retryDelay
-		if retryDelay > 300 {
-			retryDelay = 300
-		}
+		retryDelay = min(retryCount*5+retryDelay, 300)
 		irc.connection.ReconnectFreq = time.Duration(retryDelay) * time.Second
 		if err != nil {
 			slog.Error("Error connecting", "error", err)

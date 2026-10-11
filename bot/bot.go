@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/ergochat/irc-go/ircevent"
@@ -123,13 +124,7 @@ func (b *Bot) getJoinCommands(channelString string) (joinCommands []string) {
 }
 
 func (b *Bot) addToChannels(channel string) {
-	existing := false
-	for i := range b.channels {
-		if b.channels[i] == channel {
-			existing = true
-			break
-		}
-	}
+	existing := slices.Contains(b.channels, channel)
 	if !existing {
 		b.channels = append(b.channels, channel)
 	}
