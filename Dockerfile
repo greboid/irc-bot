@@ -1,4 +1,4 @@
-FROM golang:1.27.3 as builder
+FROM golang:1.27.3 AS builder
 WORKDIR /app
 COPY . /app
 RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -trimpath -ldflags=-buildid= -o main ./cmd/bot
@@ -6,5 +6,5 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -trimp
 FROM ghcr.io/greboid/dockerbase/nonroot:1.20261022.0
 
 COPY --from=builder /app/main /irc-bot
-EXPOSE 8080
+EXPOSE 8000 8001
 CMD ["/irc-bot"]
