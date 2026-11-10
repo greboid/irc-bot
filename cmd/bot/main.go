@@ -10,6 +10,7 @@ import (
 	"github.com/csmith/envflag/v2"
 	"github.com/csmith/slogflags"
 	"github.com/greboid/irc-bot/v6/bot"
+	"github.com/greboid/irc-bot/v6/irc"
 	"github.com/greboid/irc-bot/v6/rpc"
 )
 
@@ -38,6 +39,10 @@ func main() {
 	slog.Info("Starting bot")
 	if len(*Server) == 0 {
 		slog.Error("Server is mandatory")
+		os.Exit(1)
+	}
+	if !irc.ValidFloodProfile(*FloodProfile) {
+		slog.Error("Invalid flood profile", "profile", *FloodProfile)
 		os.Exit(1)
 	}
 	rpcServer, err := rpc.NewGrpcServer(*RPCPort, *PluginsString, *WebPort)

@@ -23,6 +23,10 @@ type RateLimiter struct {
 	received001 bool
 }
 
+func ValidFloodProfile(profile string) bool {
+	return profile == "unlimited" || profile == "restrictive"
+}
+
 func (r *RateLimiter) Init(profile string) {
 	switch profile {
 	case "unlimited":
