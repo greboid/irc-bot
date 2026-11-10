@@ -37,7 +37,7 @@ func NewIRC(server, password, nickname, realname string, useTLS, useSasl bool, s
 			KeepAlive:    4 * time.Minute,
 			UseTLS:       useTLS,
 			UseSASL:      useSasl,
-			EnableCTCP:   true,
+			EnableCTCP:   false,
 			Debug:        true,
 			TLSConfig: &tls.Config{
 				InsecureSkipVerify: true,
